@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\AttemptResult;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ExerciseAttempt extends Model
+{
+    public const UPDATED_AT = null;
+
+    protected $guarded = [];
+
+    protected $casts = [
+        'result' => AttemptResult::class,
+        'hints_used' => 'integer',
+        'duration_sec' => 'integer',
+        'test_results' => 'array',
+        'created_at' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function exercise(): BelongsTo
+    {
+        return $this->belongsTo(Exercise::class);
+    }
+}
