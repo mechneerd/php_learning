@@ -6,6 +6,7 @@ use App\Enums\CardType;
 use App\Enums\ContentStatus;
 use App\Enums\ProvenanceSource;
 use Database\Factories\FlashcardFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,17 +34,23 @@ class Flashcard extends Model
         'is_outdated' => 'boolean',
     ];
 
+    /** @return BelongsTo<Concept, $this> */
     public function concept(): BelongsTo
     {
         return $this->belongsTo(Concept::class);
     }
 
+    /** @return BelongsTo<Lesson, $this> */
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
     }
 
-    public function scopePublished($query)
+    /**
+     * @param  Builder<Flashcard>  $query
+     * @return Builder<Flashcard>
+     */
+    public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', ContentStatus::Published);
     }

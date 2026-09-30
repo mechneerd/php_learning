@@ -9,6 +9,7 @@ class ExerciseHint extends Model
 {
     protected $guarded = [];
 
+    /** @return BelongsTo<Exercise, $this> */
     public function exercise(): BelongsTo
     {
         return $this->belongsTo(Exercise::class);

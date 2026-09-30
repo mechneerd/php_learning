@@ -57,7 +57,7 @@ class FlashcardSession extends Component
             ->where('card_id', $cardId)
             ->first();
 
-        $currentInterval = $existing?->interval_days ?? 0;
+        $currentInterval = $existing->interval_days ?? 0;
         $next = $scheduler->schedule($currentInterval, $hintGrade);
 
         FlashcardReview::query()->updateOrCreate(
@@ -65,7 +65,7 @@ class FlashcardSession extends Component
             [
                 'grade' => $hintGrade,
                 'interval_days' => $next,
-                'ease' => $existing?->ease ?? CardScheduler::INITIAL_EASE,
+                'ease' => $existing->ease ?? CardScheduler::INITIAL_EASE,
                 'next_review_at' => now()->addDays($next),
                 'reviewed_at' => now(),
             ],
@@ -87,7 +87,7 @@ class FlashcardSession extends Component
                 ->where('user_id', Auth::id())
                 ->where('card_id', $card->id)
                 ->first();
-            $currentInterval = $existing?->interval_days ?? 0;
+            $currentInterval = $existing->interval_days ?? 0;
             $scheduler = new CardScheduler;
 
             $this->nextIntervals = [
@@ -140,6 +140,6 @@ class FlashcardSession extends Component
 
         $queue = array_merge($due, $unseen);
 
-        return array_slice($queue, 0, self::SESSION_SIZE);
+        return array_values(array_slice($queue, 0, self::SESSION_SIZE));
     }
 }

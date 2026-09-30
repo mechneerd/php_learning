@@ -6,10 +6,12 @@ use App\Enums\AttemptResult;
 use App\Http\Requests\SubmitExerciseAttemptRequest;
 use App\Models\Exercise;
 use App\Models\ExerciseAttempt;
+use App\Models\ExerciseHint;
 use App\Models\Lesson;
 use App\Services\Learning\ExerciseGrader;
 use App\Services\Learning\HintLadder;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -26,9 +28,10 @@ class PracticeRunner extends Component
 
     public int $openedAt = 0;
 
+    /** @var array<string, mixed> */
     public ?array $grade = null;
 
-    /** @var list<array<string, mixed>> */
+    /** @var array<int, array<string, mixed>> */
     public array $history = [];
 
     public bool $showSolution = false;
@@ -129,7 +132,7 @@ class PracticeRunner extends Component
         $this->loadHistory();
     }
 
-    public function reset(): void
+    public function resetAnswer(): void
     {
         $exercise = Exercise::query()->findOrFail($this->exerciseId);
         $this->answer = $exercise->starter_code ?? '';
@@ -146,12 +149,12 @@ class PracticeRunner extends Component
         $ladder = app(HintLadder::class);
         $stats = $this->attemptStats();
 
-        $hints = $exercise?->hints?->map(fn ($hint): array => [
+        $hints = $exercise?->hints?->map(fn (ExerciseHint $hint): array => [
             'level' => $hint->level,
             'text' => $hint->text,
-            'revealed' => in_array((int) $hint->level, $this->viewedHints, true),
+            'revealed' => in_array($hint->level, $this->viewedHints, true),
             'unlocked' => $ladder->canReveal(
-                (int) $hint->level,
+                $hint->level,
                 $stats['attempts'],
                 $stats['failed'],
                 $this->viewedHints,
@@ -174,8 +177,8 @@ class PracticeRunner extends Component
         ]);
     }
 
-    /** @return list<Exercise> */
-    private function exercises()
+    /** @return Collection<int, Exercise> */
+    private function exercises(): Collection
     {
         $query = Exercise::query()->published()->orderBy('ord');
 
@@ -189,7 +192,13 @@ class PracticeRunner extends Component
     /** @return list<int> */
     private function exerciseIds(): array
     {
-        return $this->exercises()->pluck('id')->map(fn ($id): int => (int) $id)->all();
+        $ids = [];
+
+        foreach ($this->exercises() as $exercise) {
+            $ids[] = $exercise->id;
+        }
+
+        return $ids;
     }
 
     private function defaultExerciseId(): int
@@ -203,7 +212,7 @@ class PracticeRunner extends Component
     {
         $this->exerciseId = $exerciseId;
         $exercise = Exercise::query()->find($exerciseId);
-        $this->answer = $exercise?->starter_code ?? '';
+        $this->answer = $exercise->starter_code ?? '';
         $this->grade = null;
         $this->showSolution = false;
         $this->viewedHints = [];
@@ -225,7 +234,7 @@ class PracticeRunner extends Component
                 'badge' => $attempt->result->badgeClass(),
                 'hints_used' => $attempt->hints_used,
                 'duration_sec' => $attempt->duration_sec,
-                'at' => $attempt->created_at?->format('H:i'),
+                'at' => $attempt->created_at->format('H:i'),
             ])
             ->all();
     }

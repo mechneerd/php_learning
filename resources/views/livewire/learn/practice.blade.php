@@ -85,7 +85,7 @@
                         </button>
                         <button
                             type="button"
-                            wire:click="reset"
+                            wire:click="resetAnswer"
                             class="rounded-lg border border-zinc-200 px-4 py-1.5 text-sm font-medium text-zinc-600 transition hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:text-zinc-100"
                         >
                             Reset

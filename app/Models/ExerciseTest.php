@@ -15,6 +15,7 @@ class ExerciseTest extends Model
         'weight' => 'integer',
     ];
 
+    /** @return BelongsTo<Exercise, $this> */
     public function exercise(): BelongsTo
     {
         return $this->belongsTo(Exercise::class);

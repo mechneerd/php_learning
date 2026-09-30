@@ -33,13 +33,13 @@ class QuizRunner extends Component
     /** @var array<string, mixed>|null */
     public ?array $report = null;
 
-    public string $option_id = '';
+    public ?string $option_id = null;
 
-    public string $answer_text = '';
+    public ?string $answer_text = null;
 
     public function mount(?Lesson $lesson = null): void
     {
-        $this->lessonId = $lesson?->id ?? $this->defaultLessonId();
+        $this->lessonId = $lesson->id ?? $this->defaultLessonId();
         $this->startedAt = time();
     }
 
@@ -122,7 +122,7 @@ class QuizRunner extends Component
 
     private function finish(): void
     {
-        $questionsById = $this->questions()->keyBy('id');
+        $questionsById = collect($this->questions())->keyBy('id');
 
         $scored = array_map(function (array $answer) use ($questionsById): array {
             $question = $questionsById[$answer['question_id']] ?? null;
@@ -175,7 +175,7 @@ class QuizRunner extends Component
             $review[] = [
                 'stem' => $question->stem,
                 'given' => $given,
-                'correct_answer' => $correctOption?->text ?? $answer['answer_text'],
+                'correct_answer' => $correctOption->text ?? $answer['answer_text'],
                 'correct' => $answer['correct'],
                 'explanation' => $question->explanation,
             ];
@@ -192,8 +192,8 @@ class QuizRunner extends Component
         ];
     }
 
-    /** @return list<QuizQuestion> */
-    private function questions()
+    /** @return array<int, QuizQuestion> */
+    private function questions(): array
     {
         if ($this->lessonId === null) {
             return [];

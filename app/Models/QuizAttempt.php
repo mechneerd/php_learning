@@ -21,16 +21,19 @@ class QuizAttempt extends Model
         'created_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Lesson, $this> */
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
     }
 
+    /** @return HasMany<QuizAnswer, $this> */
     public function answers(): HasMany
     {
         return $this->hasMany(QuizAnswer::class, 'attempt_id');

@@ -17,16 +17,19 @@ class RecallAttempt extends Model
         'created_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Concept, $this> */
     public function concept(): BelongsTo
     {
         return $this->belongsTo(Concept::class);
     }
 
+    /** @return BelongsTo<Lesson, $this> */
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);

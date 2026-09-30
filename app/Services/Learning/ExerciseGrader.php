@@ -119,6 +119,9 @@ final class ExerciseGrader
         return new GradeResult($result, [], $feedback);
     }
 
+    /**
+     * @param  Collection<int, ExerciseTest>  $tests
+     */
     private function gradeByTests(string $code, Collection $tests): GradeResult
     {
         $results = [];

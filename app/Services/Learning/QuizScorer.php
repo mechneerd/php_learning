@@ -44,7 +44,9 @@ final class QuizScorer
 
         $weak = [];
         foreach ($byConcept as $slug => $stats) {
-            $pct = $stats['total'] === 0 ? 0.0 : $stats['correct'] / $stats['total'] * 100;
+            $correct = $stats['correct'] ?? 0;
+            $total = $stats['total'];
+            $pct = $total === 0 ? 0.0 : $correct / $total * 100;
             if ($pct < self::WEAK_THRESHOLD) {
                 $weak[] = $slug;
             }

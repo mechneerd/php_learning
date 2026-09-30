@@ -10,6 +10,8 @@ class FlashcardReview extends Model
 {
     public const UPDATED_AT = null;
 
+    public $timestamps = false;
+
     protected $guarded = [];
 
     protected $casts = [
@@ -20,11 +22,13 @@ class FlashcardReview extends Model
         'reviewed_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Flashcard, $this> */
     public function card(): BelongsTo
     {
         return $this->belongsTo(Flashcard::class, 'card_id');

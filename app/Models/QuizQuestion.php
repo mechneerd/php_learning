@@ -6,6 +6,7 @@ use App\Enums\ContentStatus;
 use App\Enums\ProvenanceSource;
 use App\Enums\QuizQuestionType;
 use Database\Factories\QuizQuestionFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,22 +35,29 @@ class QuizQuestion extends Model
         'is_outdated' => 'boolean',
     ];
 
+    /** @return BelongsTo<Lesson, $this> */
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
     }
 
+    /** @return BelongsTo<Concept, $this> */
     public function concept(): BelongsTo
     {
         return $this->belongsTo(Concept::class);
     }
 
+    /** @return HasMany<QuizOption, $this> */
     public function options(): HasMany
     {
         return $this->hasMany(QuizOption::class)->orderBy('ord');
     }
 
-    public function scopePublished($query)
+    /**
+     * @param  Builder<QuizQuestion>  $query
+     * @return Builder<QuizQuestion>
+     */
+    public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', ContentStatus::Published);
     }

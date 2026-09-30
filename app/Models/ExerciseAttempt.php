@@ -20,11 +20,13 @@ class ExerciseAttempt extends Model
         'created_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Exercise, $this> */
     public function exercise(): BelongsTo
     {
         return $this->belongsTo(Exercise::class);
