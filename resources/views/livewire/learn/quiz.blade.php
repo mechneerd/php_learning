@@ -22,7 +22,7 @@
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                             {{ $report['correct'] }} of {{ $report['total'] }} correct
                         </p>
-                        <p class="mt-0.5 text-xs text-zinc-400">
+                        <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                             {{ $report['duration_sec'] }}s
                             @if ($report['is_best'])
                                 &middot; <span class="font-medium text-emerald-500">new best score</span>
@@ -75,7 +75,7 @@
                                     @endif
                                 </p>
                                 @if ($row['explanation'])
-                                    <p class="text-xs text-zinc-400">{{ $row['explanation'] }}</p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $row['explanation'] }}</p>
                                 @endif
                             </div>
                         </div>
@@ -90,7 +90,7 @@
         {{-- Question card --}}
         <section class="rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-5 py-3 dark:border-zinc-800">
-                <span class="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                <span class="text-xs font-semibold tracking-wide text-zinc-500 dark:text-zinc-400 uppercase">
                     {{ $current->type->label() }}
                 </span>
                 <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">

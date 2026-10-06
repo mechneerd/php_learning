@@ -3,11 +3,16 @@
 namespace App\Models;
 
 use App\Enums\AttemptResult;
+use Database\Factories\ExerciseAttemptFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExerciseAttempt extends Model
 {
+    /** @use HasFactory<ExerciseAttemptFactory> */
+    use HasFactory;
+
     public const UPDATED_AT = null;
 
     protected $guarded = [];

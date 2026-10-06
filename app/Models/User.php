@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -52,6 +53,30 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    /** @return HasMany<ConceptMastery, $this> */
+    public function conceptMastery(): HasMany
+    {
+        return $this->hasMany(ConceptMastery::class);
+    }
+
+    /** @return HasMany<SkillProgress, $this> */
+    public function skillProgress(): HasMany
+    {
+        return $this->hasMany(SkillProgress::class);
+    }
+
+    /** @return HasMany<ReviewItem, $this> */
+    public function reviewItems(): HasMany
+    {
+        return $this->hasMany(ReviewItem::class);
+    }
+
+    /** @return HasMany<Note, $this> */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class);
     }
 
     /**

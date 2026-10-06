@@ -10,6 +10,7 @@ use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\Stage;
 use App\Services\Content\MermaidSanitizer;
+use App\Services\Learning\EvidenceBuilder;
 use App\Services\Learning\GateEvaluator;
 use App\Services\Learning\GateEvidence;
 use Illuminate\Contracts\View\View;
@@ -22,8 +23,8 @@ use Livewire\Component;
  * with pass/fail chips and the next lesson recommendation. Also serves
  * /concepts/{slug} by pre-selecting a node (MVP: one component, two routes).
  *
- * Mastery evidence is intentionally empty in Phase 3 (concept_mastery lands
- * in Phase 5); every node renders as `unseen` until then.
+ * Mastery evidence comes from EvidenceBuilder (concept_mastery, quizzes,
+ * exercise attempts), so gates and node colors reflect live progress.
  */
 #[Title('Learning Path')]
 class PathView extends Component
@@ -48,10 +49,10 @@ class PathView extends Component
         }
     }
 
-    public function render(GateEvaluator $evaluator, MermaidSanitizer $sanitizer): View
+    public function render(GateEvaluator $evaluator, MermaidSanitizer $sanitizer, EvidenceBuilder $evidenceBuilder): View
     {
         $stages = Stage::query()->orderBy('number')->get();
-        $evidence = GateEvidence::empty();
+        $evidence = $evidenceBuilder->forUser((int) auth()->id());
 
         $lessonRead = $this->readCountsByStage();
         $totals = $this->lessonTotalsByStage();

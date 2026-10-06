@@ -11,15 +11,15 @@
                     <span class="{{ $chapterLessonCount === 0 ? 'text-zinc-400' : 'font-medium text-zinc-700 dark:text-zinc-200' }}">
                         Ch {{ $chapter['number'] }} · {{ $chapter['title'] }}
                     </span>
-                    <span class="text-[10px] text-zinc-400">{{ $chapter['page_printed_from'] !== null ? $chapter['page_printed_from'].'–'.$chapter['page_printed_to'] : '' }}</span>
+                    <span class="text-[10px] text-zinc-500 dark:text-zinc-400">{{ $chapter['page_printed_from'] !== null ? $chapter['page_printed_from'].'–'.$chapter['page_printed_to'] : '' }}</span>
                 </summary>
 
                 <div class="ms-2 mt-0.5 border-s border-zinc-200 ps-2 dark:border-zinc-700">
                     @foreach ($chapter['sections'] as $section)
+                        <p class="mt-2 mb-0.5 text-xs text-zinc-500 dark:text-zinc-400" style="padding-inline-start: {{ ($section['level'] - 1) * 0.5 }}rem">
+                            {{ $section['title'] }}
+                        </p>
                         @if (count($section['lessons']) > 0)
-                            <p class="mt-2 mb-0.5 text-xs text-zinc-400" style="padding-inline-start: {{ ($section['level'] - 1) * 0.5 }}rem">
-                                {{ $section['title'] }}
-                            </p>
                             <ul class="mb-1 space-y-0.5" style="padding-inline-start: {{ ($section['level'] - 1) * 0.5 }}rem">
                                 @foreach ($section['lessons'] as $lessonNode)
                                     <li>

@@ -3,16 +3,26 @@
 namespace App\Livewire\Learn;
 
 use App\Enums\AttemptResult;
+use App\Enums\RunStatus;
 use App\Http\Requests\SubmitExerciseAttemptRequest;
+use App\Jobs\RunCodeJob;
+use App\Models\CodeRun;
 use App\Models\Exercise;
 use App\Models\ExerciseAttempt;
 use App\Models\ExerciseHint;
 use App\Models\Lesson;
+use App\Models\User;
+use App\Services\Execution\BannedFunctionCheck;
 use App\Services\Learning\ExerciseGrader;
 use App\Services\Learning\HintLadder;
+use App\Services\Learning\MasteryEvaluator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class PracticeRunner extends Component
@@ -35,6 +45,13 @@ class PracticeRunner extends Component
     public array $history = [];
 
     public bool $showSolution = false;
+
+    public ?int $runId = null;
+
+    /** @var array<string, mixed>|null */
+    public ?array $liveRun = null;
+
+    public string $runNotice = '';
 
     public function mount(?Lesson $lesson = null): void
     {
@@ -109,17 +126,36 @@ class PracticeRunner extends Component
             ->with('tests')
             ->findOrFail($this->exerciseId);
 
-        $result = $grader->grade($exercise, $this->answer, $exercise->tests);
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
 
-        ExerciseAttempt::query()->create([
-            'user_id' => Auth::id(),
-            'exercise_id' => $exercise->id,
-            'code' => $this->answer,
-            'result' => $result->result,
-            'hints_used' => $this->hintsUsed(),
-            'duration_sec' => $this->secondsOpen(),
-            'test_results' => $result->testResultsArray(),
-        ]);
+        $liveRun = CodeRun::query()
+            ->where('user_id', $user->id)
+            ->where('exercise_id', $exercise->id)
+            ->where('status', RunStatus::Done)
+            ->where('code', $this->answer)
+            ->orderByDesc('id')
+            ->first();
+
+        $result = $grader->grade($exercise, $this->answer, $exercise->tests, $liveRun?->stdout);
+
+        DB::transaction(function () use ($exercise, $result, $user): void {
+            ExerciseAttempt::query()->create([
+                'user_id' => Auth::id(),
+                'exercise_id' => $exercise->id,
+                'code' => $this->answer,
+                'result' => $result->result,
+                'hints_used' => $this->hintsUsed(),
+                'duration_sec' => $this->secondsOpen(),
+                'test_results' => $result->testResultsArray(),
+            ]);
+
+            (new MasteryEvaluator)->recordAttempt(
+                $user,
+                $exercise,
+                $result->result,
+            );
+        });
 
         $this->grade = [
             'result' => $result->result->value,
@@ -127,9 +163,141 @@ class PracticeRunner extends Component
             'badge' => $result->result->badgeClass(),
             'feedback' => $result->feedback,
             'tests' => $result->testResultsArray(),
+            'live' => $liveRun !== null,
         ];
 
         $this->loadHistory();
+    }
+
+    /**
+     * Queues a sandbox run of the current answer (docs/12 §2). Pre-checks
+     * run before dispatch (fast fail); the runner repeats them.
+     */
+    public function run(): void
+    {
+        $this->validate([
+            'answer' => ['required', 'string', 'max:'.(int) config('runner.limits.source_bytes')],
+        ]);
+
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
+
+        $exercise = Exercise::query()->published()->findOrFail($this->exerciseId);
+        $this->runNotice = '';
+
+        if (! $exercise->type->isCode()) {
+            $this->runNotice = 'Run is only available for code exercises.';
+
+            return;
+        }
+
+        $key = 'run:'.$user->id;
+        $max = (int) config('runner.rate_limit.max');
+        $decay = (int) config('runner.rate_limit.decay_seconds');
+
+        if (RateLimiter::tooManyAttempts($key, $max)) {
+            $this->runNotice = 'Run limit reached — try again in '.RateLimiter::availableIn($key).' seconds.';
+
+            return;
+        }
+
+        RateLimiter::hit($key, $decay);
+
+        $banned = app(BannedFunctionCheck::class)->firstHit($this->answer);
+
+        if ($banned !== null) {
+            $this->storeBlockedRun($user, $exercise, "Blocked: `{$banned}` is not allowed (execution safety rules).");
+            $this->runNotice = "Blocked: `{$banned}` is not allowed in the sandbox.";
+
+            return;
+        }
+
+        $pending = CodeRun::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', [RunStatus::Queued->value, RunStatus::Running->value])
+            ->where('created_at', '>=', now()->subSeconds(60))
+            ->count();
+
+        if ($pending >= (int) config('runner.max_pending_per_user')) {
+            $this->runNotice = 'You already have '.$pending.' run(s) in progress — wait for them to finish.';
+
+            return;
+        }
+
+        $global = (int) Cache::get('runs:global:pending', 0);
+
+        if ($global >= (int) config('runner.max_pending_global')) {
+            $this->runNotice = 'The sandbox is busy right now — try again in a few seconds.';
+
+            return;
+        }
+
+        Cache::put('runs:global:pending', $global + 1, now()->addSeconds(60));
+
+        $run = CodeRun::query()->create([
+            'user_id' => $user->id,
+            'exercise_id' => $exercise->id,
+            'attempt_id' => (string) Str::uuid(),
+            'code' => $this->answer,
+            'status' => RunStatus::Queued,
+        ]);
+
+        RunCodeJob::dispatch($run->id);
+
+        $this->runId = $run->id;
+        $this->syncRun();
+    }
+
+    /**
+     * Reloads the current run for the live result panel (wire:poll).
+     */
+    public function syncRun(): void
+    {
+        if ($this->runId === null) {
+            $this->liveRun = null;
+
+            return;
+        }
+
+        $run = CodeRun::query()
+            ->where('user_id', Auth::id())
+            ->find($this->runId);
+
+        if ($run === null) {
+            $this->liveRun = null;
+
+            return;
+        }
+
+        $metrics = $run->metrics ?? [];
+
+        $this->liveRun = [
+            'status' => $run->status->value,
+            'label' => $run->status->label(),
+            'badge' => $run->status->badgeClass(),
+            'pending' => $run->status->isPending(),
+            'stdout' => $run->stdout ?? '',
+            'stderr' => $run->stderr ?? '',
+            'exit_code' => $run->exit_code,
+            'duration_ms' => $run->duration_ms,
+            'truncated' => (bool) ($metrics['truncated'] ?? false),
+            'error' => $run->error,
+        ];
+    }
+
+    private function storeBlockedRun(User $user, Exercise $exercise, string $reason): void
+    {
+        $run = CodeRun::query()->create([
+            'user_id' => $user->id,
+            'exercise_id' => $exercise->id,
+            'attempt_id' => (string) Str::uuid(),
+            'code' => $this->answer,
+            'status' => RunStatus::Blocked,
+            'error' => $reason,
+        ]);
+
+        $this->runId = $run->id;
+        $this->syncRun();
     }
 
     public function resetAnswer(): void
@@ -174,6 +342,9 @@ class PracticeRunner extends Component
             ),
             'attemptsCount' => $stats['attempts'],
             'failedCount' => $stats['failed'],
+            'runPending' => (bool) ($this->liveRun['pending'] ?? false),
+            'runNotice' => $this->runNotice,
+            'liveRun' => $this->liveRun,
         ]);
     }
 
@@ -217,6 +388,9 @@ class PracticeRunner extends Component
         $this->showSolution = false;
         $this->viewedHints = [];
         $this->openedAt = time();
+        $this->runId = null;
+        $this->liveRun = null;
+        $this->runNotice = '';
         $this->loadHistory();
     }
 

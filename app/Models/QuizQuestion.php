@@ -50,7 +50,7 @@ class QuizQuestion extends Model
     /** @return HasMany<QuizOption, $this> */
     public function options(): HasMany
     {
-        return $this->hasMany(QuizOption::class)->orderBy('ord');
+        return $this->hasMany(QuizOption::class, 'question_id')->orderBy('ord');
     }
 
     /**

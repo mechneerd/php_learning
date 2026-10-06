@@ -1,6 +1,6 @@
 @php($payload = $block['payload'] ?? [])
 <figure class="group/code my-2 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
-    <figcaption class="flex items-center justify-between border-b border-zinc-800 px-4 py-2 text-xs text-zinc-400">
+    <figcaption class="flex items-center justify-between border-b border-zinc-800 px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
         <span class="font-mono uppercase">{{ $payload['lang'] ?? 'php' }}</span>
         <x-citation-line :citation="$block['citation'] ?? null" />
     </figcaption>

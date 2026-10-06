@@ -24,13 +24,20 @@ use Illuminate\Support\Carbon;
  * @property string|null $figure_ref
  * @property int|null $page_pdf
  * @property ContentStatus $status
+ * @property string|null $ai_model
+ * @property Carbon|null $ai_generated_at
+ * @property string|null $ai_prompt_version
+ * @property int|null $reviewed_by
+ * @property Carbon|null $reviewed_at
+ * @property bool $is_outdated
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Lesson|null $lesson
  */
 #[Fillable([
     'lesson_id', 'kind', 'title', 'mermaid_source', 'source', 'figure_ref',
-    'page_pdf', 'status',
+    'page_pdf', 'status', 'ai_model', 'ai_generated_at', 'ai_prompt_version',
+    'reviewed_by', 'reviewed_at', 'is_outdated',
 ])]
 class Diagram extends Model
 {
@@ -47,6 +54,9 @@ class Diagram extends Model
             'source' => DiagramSource::class,
             'status' => ContentStatus::class,
             'page_pdf' => 'integer',
+            'ai_generated_at' => 'datetime',
+            'reviewed_at' => 'datetime',
+            'is_outdated' => 'boolean',
         ];
     }
 

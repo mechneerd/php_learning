@@ -1,11 +1,26 @@
 <?php
 
+use App\Livewire\Admin\Analytics;
 use App\Livewire\Admin\Books\Index;
+use App\Livewire\Admin\ConceptGraphEditor;
+use App\Livewire\Admin\ImportJobs;
+use App\Livewire\Admin\LessonEditor;
+use App\Livewire\Admin\ReviewQueue;
+use App\Livewire\Learn\Dashboard;
+use App\Livewire\Learn\ErrorLibrary;
 use App\Livewire\Learn\FlashcardSession;
+use App\Livewire\Learn\InterviewMode;
 use App\Livewire\Learn\LessonView;
+use App\Livewire\Learn\NotesList;
 use App\Livewire\Learn\PathView;
 use App\Livewire\Learn\PracticeRunner;
+use App\Livewire\Learn\ProjectDetail;
+use App\Livewire\Learn\Projects;
 use App\Livewire\Learn\QuizRunner;
+use App\Livewire\Learn\RevisionQueue;
+use App\Livewire\Learn\SearchPage;
+use App\Livewire\Learn\SkillsView;
+use App\Livewire\Learn\TutorChat;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +29,7 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::livewire('dashboard', Dashboard::class)->name('dashboard');
 
     Route::livewire('path', PathView::class)->name('path');
     Route::livewire('concepts/{concept:slug}', PathView::class)->name('concepts.show');
@@ -23,12 +38,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('quiz', QuizRunner::class)->name('quiz');
     Route::view('debug', 'coming-soon', ['title' => __('Debug Lab'), 'phase' => 9, 'description' => __('Find and fix broken PHP code.')])->name('debug');
     Route::livewire('flashcards', FlashcardSession::class)->name('flashcards');
-    Route::view('revision', 'coming-soon', ['title' => __('Revision'), 'phase' => 5, 'description' => __('Everything that is due today: cards, weak concepts and past mistakes.')])->name('revision');
-    Route::view('skills', 'coming-soon', ['title' => __('Skills'), 'phase' => 5, 'description' => __('Sixteen PHP skill domains tracked by evidence, not reading.')])->name('skills');
-    Route::view('interview', 'coming-soon', ['title' => __('Interview'), 'phase' => 9, 'description' => __('PHP interview questions answered from understanding.')])->name('interview');
-    Route::view('projects', 'coming-soon', ['title' => __('Projects'), 'phase' => 9, 'description' => __('Build real applications that reuse what you have learned.')])->name('projects');
-    Route::view('tutor', 'coming-soon', ['title' => __('AI Tutor'), 'phase' => 6, 'description' => __('A tutor that knows your progress, hints before it answers, and never does the work for you.')])->name('tutor');
-    Route::view('search', 'coming-soon', ['title' => __('Search'), 'phase' => 5, 'description' => __('Search lessons, concepts, examples, exercises, errors and cards.')])->name('search');
+    Route::livewire('revision', RevisionQueue::class)->name('revision');
+    Route::livewire('skills', SkillsView::class)->name('skills');
+    Route::livewire('interview', InterviewMode::class)->name('interview');
+    Route::livewire('projects', Projects::class)->name('projects');
+    Route::livewire('projects/{project:slug}', ProjectDetail::class)->name('projects.show');
+    Route::livewire('errors', ErrorLibrary::class)->name('errors');
+    Route::livewire('errors/{pattern:slug}', ErrorLibrary::class)->name('errors.show');
+    Route::livewire('tutor', TutorChat::class)->name('tutor');
+    Route::livewire('search', SearchPage::class)->name('search');
+    Route::livewire('notes', NotesList::class)->name('notes');
 
     Route::get('lessons', function (): RedirectResponse {
         $progress = LessonProgress::query()
@@ -54,6 +73,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
         Route::view('/', 'admin.dashboard', ['title' => __('Admin')])->name('dashboard');
         Route::livewire('books', Index::class)->name('books');
+        Route::livewire('review', ReviewQueue::class)->name('review');
+        Route::livewire('lessons', LessonEditor::class)->name('lessons');
+        Route::livewire('lessons/{lessonId}', LessonEditor::class)->name('lessons.edit');
+        Route::livewire('concepts', ConceptGraphEditor::class)->name('concepts');
+        Route::livewire('import-jobs', ImportJobs::class)->name('import-jobs');
+        Route::livewire('analytics', Analytics::class)->name('analytics');
     });
 });
 

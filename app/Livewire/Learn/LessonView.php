@@ -7,6 +7,7 @@ use App\Enums\ProgressState;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Services\Content\LessonBuilder;
+use App\Support\LaravelBridge;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -110,6 +111,7 @@ class LessonView extends Component
 
         return view('livewire.learn.lesson-view', [
             'lesson' => $payload['lesson'],
+            'lessonModel' => $lesson,
             'blocks' => $payload['blocks'],
             'codeExamples' => $payload['code_examples'],
             'diagrams' => $payload['diagrams'],
@@ -121,6 +123,7 @@ class LessonView extends Component
             'prev' => $position > 0 ? $flat[$position - 1] : null,
             'next' => $position !== false && isset($flat[$position + 1]) ? $flat[$position + 1] : null,
             'modePhase' => self::MODE_PHASE[$this->mode] ?? null,
+            'bridgeRows' => LaravelBridge::forStage($lesson->stage->number ?? -1),
         ]);
     }
 

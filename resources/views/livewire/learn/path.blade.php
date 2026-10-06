@@ -27,7 +27,7 @@
                     'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30' => $entry['locked'],
                     'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900' => ! $entry['locked'],
                 ])>
-                    <div class="flex items-center justify-between gap-2 text-xs text-zinc-400">
+                    <div class="flex items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                         <span>Stage {{ $stage->number }}</span>
                         @if ($entry['locked'])
                             <span class="rounded-full bg-amber-200 px-2 py-0.5 font-medium text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">Gated</span>
@@ -39,7 +39,7 @@
                     <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                         <div class="h-full rounded-full bg-zinc-800 dark:bg-zinc-200" style="width: {{ $entry['pct'] ?? 0 }}%"></div>
                     </div>
-                    <p class="mt-1 text-xs text-zinc-400">
+                    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                         {{ $entry['pct'] === null ? 'No lessons yet' : $entry['pct'].'% read' }}
                     </p>
                 </li>
@@ -52,7 +52,7 @@
         <section class="min-w-0 rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
                 <h2 class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Concept graph</h2>
-                <p class="text-xs text-zinc-400">
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">
                     <span class="font-mono">A --&gt; B</span> hard prerequisite ·
                     <span class="font-mono">A -.-&gt; B</span> used later ·
                     dashed ring = recommended
@@ -111,11 +111,11 @@
                                         @endif
                                         <span class="text-zinc-700 dark:text-zinc-300">{{ $check->label }}</span>
                                     </span>
-                                    <span class="shrink-0 text-xs text-zinc-400">{{ $check->have }} / {{ $check->need }}</span>
+                                    <span class="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{{ $check->have }} / {{ $check->need }}</span>
                                 </li>
                             @endforeach
                         </ul>
-                        <p class="mt-3 text-xs text-zinc-400">
+                        <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
                             {{ $nextGate['result']->passedCount() }} of {{ count($nextGate['result']->checks) }} requirements met.
                         </p>
                     </div>
@@ -135,7 +135,7 @@
                             <h2 class="mt-0.5 text-lg font-semibold text-zinc-900 dark:text-zinc-50">{{ $concept->name }}</h2>
                         </div>
                         <button type="button" wire:click="$set('selected', null)"
-                                class="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">Clear</button>
+                                class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">Clear</button>
                     </div>
                     <div class="flex flex-wrap gap-1.5 px-4 pt-2 text-xs">
                         <span class="rounded-full bg-white px-2 py-0.5 font-medium text-zinc-600 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-700">{{ $concept->skill_domain }}</span>

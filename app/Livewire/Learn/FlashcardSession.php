@@ -82,7 +82,7 @@ class FlashcardSession extends Component
         $cardId = $this->queue[$this->index] ?? null;
         $card = $cardId !== null ? Flashcard::query()->published()->find($cardId) : null;
 
-        if ($card !== null && ! $this->flipped) {
+        if ($card !== null) {
             $existing = FlashcardReview::query()
                 ->where('user_id', Auth::id())
                 ->where('card_id', $card->id)

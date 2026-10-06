@@ -2,7 +2,7 @@
 
 @if ($card)
     <div class="space-y-4">
-        <p class="text-center text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+        <p class="text-center text-xs font-semibold tracking-wide text-zinc-500 dark:text-zinc-400 uppercase">
             {{ $card->card_type->label() }}
             @if ($card->concept)
                 &middot; {{ $card->concept->name }}
@@ -17,7 +17,7 @@
             style="min-height: 16rem"
             aria-label="Flip card"
         >
-            <p class="text-xs font-medium tracking-wide text-zinc-400 uppercase">
+            <p class="text-xs font-medium tracking-wide text-zinc-500 dark:text-zinc-400 uppercase">
                 {{ $flipped ? 'Back' : 'Front' }} &middot; {{ $flipped ? 'click to hide' : 'click to reveal' }}
             </p>
             <div class="mt-4 text-base leading-relaxed text-zinc-800 dark:text-zinc-100">

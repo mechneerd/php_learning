@@ -7,7 +7,7 @@
             </p>
         </div>
         @if (! $done)
-            <p class="text-sm text-zinc-400">{{ $reviewed }} reviewed &middot; {{ $remaining }} left in this session</p>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ $reviewed }} reviewed &middot; {{ $remaining }} left in this session</p>
         @endif
     </header>
 

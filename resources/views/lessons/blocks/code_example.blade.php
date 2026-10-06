@@ -11,7 +11,7 @@
 @endphp
 @if ($example)
     <figure class="group/code my-2 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
-        <figcaption class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-4 py-2 text-xs text-zinc-400">
+        <figcaption class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">
             <span class="flex items-center gap-2">
                 <span class="font-medium text-zinc-200">{{ $example['title'] }}</span>
                 <span class="rounded-full px-2 py-0.5 font-medium {{ $tierStyles }}">{{ \App\Enums\CodeTier::tryFrom((int) $example['tier'])?->label() ?? 'Tier '.$example['tier'] }}</span>

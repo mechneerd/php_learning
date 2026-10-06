@@ -36,6 +36,9 @@
                     <flux:sidebar.item icon="bug-ant" :href="route('debug')" :current="request()->routeIs('debug')" wire:navigate>
                         {{ __('Debug Lab') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="exclamation-triangle" :href="route('errors')" :current="request()->routeIs('errors*')" wire:navigate>
+                        {{ __('Error Library') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('Reinforce')" class="grid">
@@ -72,6 +75,21 @@
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="document-text" :href="route('admin.books')" :current="request()->routeIs('admin.books')" wire:navigate>
                             {{ __('Books') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="check-badge" :href="route('admin.review')" :current="request()->routeIs('admin.review')" wire:navigate>
+                            {{ __('Review Queue') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="pencil-square" :href="route('admin.lessons')" :current="request()->routeIs('admin.lessons*')" wire:navigate>
+                            {{ __('Lessons') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="square-3-stack-3d" :href="route('admin.concepts')" :current="request()->routeIs('admin.concepts')" wire:navigate>
+                            {{ __('Concepts') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="queue-list" :href="route('admin.import-jobs')" :current="request()->routeIs('admin.import-jobs')" wire:navigate>
+                            {{ __('Import Jobs') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="chart-bar" :href="route('admin.analytics')" :current="request()->routeIs('admin.analytics')" wire:navigate>
+                            {{ __('Analytics') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                 @endif

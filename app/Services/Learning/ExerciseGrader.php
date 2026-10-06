@@ -6,38 +6,29 @@ use App\Enums\AttemptResult;
 use App\Enums\ExerciseType;
 use App\Models\Exercise;
 use App\Models\ExerciseTest;
+use App\Services\Execution\BannedFunctionCheck;
 use Illuminate\Support\Collection;
 
 /**
- * Static exercise grader. Pre-Phase 8 nothing is executed in-process:
- * code answers are checked with static rules (contain / regex / banned
- * functions), stored-answer types are compared against expected answers.
+ * Exercise grader. Code answers are checked with static rules
+ * (contain / regex / banned functions) and, when a live sandbox run for
+ * the same source exists, assert_output checks against its stdout.
+ * Stored-answer types are compared against expected answers.
  */
 final class ExerciseGrader
 {
-    public const PENDING_MESSAGE = 'Live execution arrives in Phase 8 — answers are checked with static rules for now.';
-
-    /**
-     * Functions that must never appear in a submitted answer (docs/12).
-     *
-     * @var list<string>
-     */
-    private const BANNED = [
-        'eval', 'assert', 'exec', 'system', 'shell_exec', 'passthru',
-        'proc_open', 'popen', 'pcntl_exec', 'pcntl_fork', 'curl_exec',
-        'fsockopen', 'dl', 'putenv', 'mail',
-    ];
+    public const PENDING_MESSAGE = 'Some checks need a live run â€” press Run to execute your code in the sandbox.';
 
     /**
      * @param  Collection<int, ExerciseTest>  $tests
      */
-    public function grade(Exercise $exercise, string $answer, Collection $tests): GradeResult
+    public function grade(Exercise $exercise, string $answer, Collection $tests, ?string $liveOutput = null): GradeResult
     {
         if ($exercise->type->usesStoredAnswer()) {
             return $this->gradeStoredAnswer($exercise, $answer);
         }
 
-        $banned = $this->bannedFunctionHit($answer);
+        $banned = (new BannedFunctionCheck)->firstHit($answer);
         if ($banned !== null) {
             return new GradeResult(
                 AttemptResult::Error,
@@ -46,7 +37,7 @@ final class ExerciseGrader
             );
         }
 
-        return $this->gradeByTests($answer, $tests);
+        return $this->gradeByTests($exercise, $answer, $tests, $liveOutput);
     }
 
     private function gradeStoredAnswer(Exercise $exercise, string $answer): GradeResult
@@ -91,7 +82,7 @@ final class ExerciseGrader
             return new GradeResult(
                 AttemptResult::Partial,
                 [],
-                'No keyword rubric is configured for this exercise yet — compare your answer with the explanation.',
+                'No keyword rubric is configured for this exercise yet â€” compare your answer with the explanation.',
             );
         }
 
@@ -122,14 +113,14 @@ final class ExerciseGrader
     /**
      * @param  Collection<int, ExerciseTest>  $tests
      */
-    private function gradeByTests(string $code, Collection $tests): GradeResult
+    private function gradeByTests(Exercise $exercise, string $code, Collection $tests, ?string $liveOutput): GradeResult
     {
         $results = [];
         $scorablePass = 0;
         $scorableTotal = 0;
 
         foreach ($tests as $test) {
-            $result = $this->evaluateTest($test, $code);
+            $result = $this->evaluateTest($test, $code, $liveOutput);
             $results[] = $result;
 
             if ($result->status !== 'pending') {
@@ -142,7 +133,7 @@ final class ExerciseGrader
 
         if ($scorableTotal === 0) {
             $feedback = $results === []
-                ? 'No checks are configured for this exercise yet — '.self::PENDING_MESSAGE
+                ? 'No checks are configured for this exercise yet â€” '.self::PENDING_MESSAGE
                 : self::PENDING_MESSAGE;
 
             return new GradeResult(AttemptResult::Partial, $results, $feedback);
@@ -150,25 +141,26 @@ final class ExerciseGrader
 
         if ($scorablePass === $scorableTotal) {
             $result = AttemptResult::Correct;
-            $feedback = "All {$scorableTotal} static check(s) passed.";
+            $feedback = "All {$scorableTotal} check(s) passed.";
         } elseif ($scorablePass === 0) {
             $result = AttemptResult::Incorrect;
-            $feedback = "None of the {$scorableTotal} static check(s) passed yet.";
+            $feedback = "None of the {$scorableTotal} check(s) passed yet.";
         } else {
             $result = AttemptResult::Partial;
-            $feedback = "{$scorablePass} of {$scorableTotal} static checks passed.";
+            $feedback = "{$scorablePass} of {$scorableTotal} checks passed.";
         }
 
         return new GradeResult($result, $results, $feedback);
     }
 
-    private function evaluateTest(ExerciseTest $test, string $code): TestResult
+    private function evaluateTest(ExerciseTest $test, string $code, ?string $liveOutput): TestResult
     {
         $payload = $test->payload ?? [];
 
         return match ($test->type) {
             'assert_contains' => $this->codeContains($test, (string) ($payload['needle'] ?? ''), $code),
             'assert_regex' => $this->codeRegex($test, (string) ($payload['pattern'] ?? ''), $code),
+            'assert_output' => $this->outputCheck($test, $liveOutput),
             'static_check' => $this->codeStatic($test, $code),
             default => new TestResult(
                 $test->ord,
@@ -215,6 +207,43 @@ final class ExerciseGrader
         );
     }
 
+    /**
+     * Compares the live run's stdout with the expected output; without a
+     * finished run the check stays pending.
+     */
+    private function outputCheck(ExerciseTest $test, ?string $liveOutput): TestResult
+    {
+        $payload = $test->payload ?? [];
+        $expected = $payload['expected'] ?? null;
+        $expected = is_string($expected) ? $this->normalizeOutput($expected) : '';
+
+        if ($expected === '') {
+            return new TestResult($test->ord, $test->type, 'pending', 'No expected output is configured for this check.', $test->weight);
+        }
+
+        if ($liveOutput === null) {
+            return new TestResult($test->ord, $test->type, 'pending', 'Run your code to check its output.', $test->weight);
+        }
+
+        $pass = $this->normalizeOutput($liveOutput) === $expected;
+
+        return new TestResult(
+            $test->ord,
+            $test->type,
+            $pass ? 'pass' : 'fail',
+            $pass ? 'Output matches the expected output.' : 'Output differs from the expected output.',
+            $test->weight,
+        );
+    }
+
+    private function normalizeOutput(string $value): string
+    {
+        $value = str_replace(["\r\n", "\r"], "\n", $value);
+        $lines = array_map(fn (string $line): string => rtrim($line), explode("\n", $value));
+
+        return trim(implode("\n", $lines), "\n");
+    }
+
     private function codeStatic(ExerciseTest $test, string $code): TestResult
     {
         $payload = $test->payload ?? [];
@@ -259,27 +288,5 @@ final class ExerciseGrader
         }
 
         return '/'.str_replace('/', '\/', $pattern).'/i';
-    }
-
-    /**
-     * First banned function found in the submission, or null.
-     */
-    private function bannedFunctionHit(string $code): ?string
-    {
-        foreach (self::BANNED as $fn) {
-            if (preg_match('/\b'.preg_quote($fn, '/').'\s*\(/i', $code) === 1) {
-                return $fn;
-            }
-        }
-
-        if (preg_match('/file_get_contents\s*\(\s*[\'"]https?:/i', $code) === 1) {
-            return 'file_get_contents(http…)';
-        }
-
-        if (preg_match('/\b(include|require)(_once)?\s*\(\s*[\'"]https?:/i', $code) === 1) {
-            return 'remote include';
-        }
-
-        return null;
     }
 }

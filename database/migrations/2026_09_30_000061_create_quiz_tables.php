@@ -41,7 +41,7 @@ return new class extends Migration
 
         Schema::create('quiz_options', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('question_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('question_id')->constrained('quiz_questions')->cascadeOnDelete();
             $table->text('text');
             $table->boolean('is_correct')->default(false);
             $table->text('feedback')->nullable();
@@ -66,7 +66,7 @@ return new class extends Migration
         Schema::create('quiz_answers', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('attempt_id')->constrained('quiz_attempts')->cascadeOnDelete();
-            $table->foreignId('question_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('question_id')->constrained('quiz_questions')->cascadeOnDelete();
             $table->foreignId('option_id')->nullable()->constrained('quiz_options')->nullOnDelete();
             $table->text('answer_text')->nullable();
             $table->boolean('is_correct')->default(false);

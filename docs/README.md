@@ -23,6 +23,7 @@ The PDF is the **source of truth**. AI-generated material always sits beside it,
 | 13 | [tech-stack.md](13-tech-stack.md) | Stack, conventions, folder layout, quality gates |
 | 14 | [mvp-scope.md](14-mvp-scope.md) | What is in/out of the MVP and why |
 | 15 | [implementation-plan.md](15-implementation-plan.md) | Phase-by-phase build plan: migrations, models, services, routes, views, tests, seeders |
+| 16 | [16-operations-runbook.md](16-operations-runbook.md) | Backup, restore, deploy, quality gates, monitoring, rollback |
 
 ## How to read this
 

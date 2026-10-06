@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -52,6 +53,12 @@ class Concept extends Model
     public function lessons(): BelongsToMany
     {
         return $this->belongsToMany(Lesson::class, 'lesson_concepts')->withPivot('role');
+    }
+
+    /** @return HasMany<ConceptMastery, $this> */
+    public function mastery(): HasMany
+    {
+        return $this->hasMany(ConceptMastery::class);
     }
 
     /**

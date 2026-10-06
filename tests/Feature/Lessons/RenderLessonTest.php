@@ -124,12 +124,14 @@ it('switches mode tabs and rail tabs without losing the lesson', function () {
     Livewire::test(LessonView::class, ['lesson' => $lesson])
         ->assertSet('mode', 'read')
         ->call('setMode', 'practice')
-        ->assertSet('mode', 'practice')
-        ->assertSee('Phase 4')
+        ->assertRedirect(route('practice.show', $lesson->slug))
+        ->assertSet('mode', 'read')
+        ->call('setMode', 'quiz')
+        ->assertRedirect(route('quiz.show', $lesson->slug))
         ->call('setMode', 'teach')
-        ->assertSee('Phase 6')
+        ->assertSee('Ask anything about the lesson')
         ->call('setRailTab', 'tutor')
-        ->assertSee('never calls the AI')
+        ->assertSee('Ask anything about the lesson')
         ->call('setMode', 'invented-mode')
         ->assertSet('mode', 'teach');
 });

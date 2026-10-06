@@ -5,7 +5,7 @@
     $badgeClass = match ($status) {
         'pass' => 'bg-emerald-500/15 text-emerald-400 ring-emerald-500/30',
         'fail' => 'bg-rose-500/15 text-rose-400 ring-rose-500/30',
-        default => 'bg-zinc-500/15 text-zinc-400 ring-zinc-500/30',
+        default => 'bg-zinc-500/15 text-zinc-500 dark:text-zinc-400 ring-zinc-500/30',
     };
     $label = match ($status) {
         'pass' => 'Pass',
@@ -19,7 +19,7 @@
         {{ $label }}
     </span>
     <div class="min-w-0">
-        <p class="font-mono text-xs text-zinc-400">#{{ $test['ord'] ?? '?' }} &middot; {{ $test['type'] ?? '?' }}</p>
+        <p class="font-mono text-xs text-zinc-500 dark:text-zinc-400">#{{ $test['ord'] ?? '?' }} &middot; {{ $test['type'] ?? '?' }}</p>
         <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-300">{{ $test['message'] ?? '' }}</p>
     </div>
 </div>

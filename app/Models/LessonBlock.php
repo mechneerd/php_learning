@@ -25,7 +25,7 @@ use Illuminate\Support\Carbon;
  * @property-read Lesson $lesson
  */
 #[Fillable([
-    'ord', 'type', 'payload', 'source', 'page_printed_from', 'page_printed_to',
+    'lesson_id', 'ord', 'type', 'payload', 'source', 'page_printed_from', 'page_printed_to',
     'page_pdf_from', 'page_pdf_to',
 ])]
 class LessonBlock extends Model

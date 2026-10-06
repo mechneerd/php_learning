@@ -36,6 +36,14 @@ return [
 
     'daily_token_budget' => (int) env('AI_DAILY_TOKEN_BUDGET', 500000),
 
+    /*
+    |---------------------------------------------------------------------
+    | Shared budget for Pipeline A (content generation jobs). Exceeding
+    | it fails queued generations with reason "budget" (docs/10).
+    */
+
+    'daily_generation_budget' => (int) env('AI_DAILY_GENERATION_BUDGET', 2000000),
+
     'tutor_messages_per_10_minutes' => (int) env('AI_TUTOR_RATE', 20),
 
     /*
