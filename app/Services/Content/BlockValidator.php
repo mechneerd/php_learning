@@ -37,7 +37,7 @@ final class BlockValidator
             BlockType::CardRefs => ['labels' => 'string[]'],
             BlockType::InterviewRef => ['labels' => 'string[]'],
             BlockType::Tabs => ['tabs' => 'tabs'],
-            BlockType::Image => ['figure_ref' => 'string', 'caption' => 'string?', 'page_pdf' => 'int?'],
+            BlockType::Image => ['figure_ref' => 'string', 'caption' => 'string?', 'page_pdf' => 'int?', 'src' => 'string?', 'alt' => 'string?', 'media_id' => 'int?', 'width' => 'int?', 'height' => 'int?'],
             BlockType::CodeExample => ['code_example_id' => 'int'],
         };
 

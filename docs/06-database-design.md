@@ -1,6 +1,6 @@
-# 06 — Database Design
+﻿# 06 â€” Database Design
 
-Engine: **SQLite** for local dev (current `.env`, FTS5 available) — schema is portable to MySQL (`TEXT`/`INTEGER`/`DATETIME` via Laravel schema builder; no engine-specific SQL except the FTS virtual table, which has a LIKE-based fallback).
+Engine: **SQLite** for local dev (current `.env`, FTS5 available) â€” schema is portable to MySQL (`TEXT`/`INTEGER`/`DATETIME` via Laravel schema builder; no engine-specific SQL except the FTS virtual table, which has a LIKE-based fallback).
 
 Conventions:
 - Tables `snake_case`, plural. All tables have `id` PK and `timestamps` unless noted.
@@ -32,7 +32,7 @@ Applied to: `lessons`, `lesson_blocks`, `code_examples`, `diagrams`, `exercises`
 
 ---
 
-## Module A — Identity
+## Module A â€” Identity
 
 ### `users` (extend existing)
 | Column | Type | Notes |
@@ -44,7 +44,7 @@ Applied to: `lessons`, `lesson_blocks`, `code_examples`, `diagrams`, `exercises`
 
 Indexes: unique `email`.
 
-## Module B — Source import
+## Module B â€” Source import
 
 ### `books`
 | Column | Type |
@@ -72,7 +72,7 @@ Indexes: unique `email`.
 | page_printed | int nullable | detected trailing number |
 | text | longText | sanitized |
 | word_count | int | |
-| extraction_quality | decimal(4,2) | heuristic 0–1 |
+| extraction_quality | decimal(4,2) | heuristic 0â€“1 |
 | needs_review | boolean | |
 | timestamps | | unique(`pdf_document_id`,`page_pdf`) |
 
@@ -95,7 +95,7 @@ Indexes: unique `email`.
 | note | text nullable |
 | resolved_at, resolved_by (FK users), timestamps | |
 
-## Module C — Content tree
+## Module C â€” Content tree
 
 ### `stages`
 | Column | Type | Notes |
@@ -153,7 +153,18 @@ Indexes: unique `email`.
 | page_printed_from/to, page_pdf_from/to | int nullable | |
 | created_at, updated_at | | |
 
-## Module D — Concepts & graph
+### `lesson_media`
+| Column | Type | Notes |
+|---|---|---|
+| id, lesson_id | FK | cascade |
+| figure_ref | string unique | book figure number (`16-1`) |
+| caption, alt | text | caption from the book page, alt for a11y |
+| path, disk | string | file under `public/figures/` (disk `public`): `figure-{page_pdf}.png` for raster figures extracted with `pdfimages`, `figure-{ref}.png` for vector diagrams rendered from the caption's page with `pdftotext -bbox` + `pdftoppm` (200 DPI crop) |
+| width, height | int nullable | pixel dimensions (refreshed from the file after re-renders) |
+| source, page_printed, page_pdf | | provenance block |
+| timestamps | | |
+
+## Module D â€” Concepts & graph
 
 ### `concepts`
 | Column | Type |
@@ -167,12 +178,12 @@ Indexes: unique `email`.
 | timestamps | |
 
 ### `lesson_concepts`
-`lesson_id` FK, `concept_id` FK, `role` (`core`,`prereq`,`built_on`) — composite PK.
+`lesson_id` FK, `concept_id` FK, `role` (`core`,`prereq`,`built_on`) â€” composite PK.
 
 ### `concept_prerequisites`
-`concept_id` FK, `prereq_concept_id` FK, `weight` int default 1, `source` (`book`,`ai`,`manual`) — unique pair. Cycle prevention validated in service + test.
+`concept_id` FK, `prereq_concept_id` FK, `weight` int default 1, `source` (`book`,`ai`,`manual`) â€” unique pair. Cycle prevention validated in service + test.
 
-## Module E — Learning assets
+## Module E â€” Learning assets
 
 ### `code_examples`
 | Column | Type |
@@ -180,12 +191,12 @@ Indexes: unique `email`.
 | id, lesson_id | FK |
 | concept_id | FK nullable |
 | listing_ref | string nullable (`04.19`) |
-| tier | tinyint 1–4 |
+| tier | tinyint 1â€“4 |
 | title, code (text), expected_output (text nullable) |
 | explanation, syntax_notes, common_mistake | text nullable |
 | external_ref | string nullable (repo path) |
 | ord | int |
-| provenance block (source/page_*/status/…) | |
+| provenance block (source/page_*/status/â€¦) | |
 | timestamps | |
 
 ### `diagrams`
@@ -203,7 +214,7 @@ Indexes: unique `email`.
 `terms`: id, slug unique, term, definition, timestamps.
 `lesson_terms`: lesson_id, term_id (pivot).
 
-## Module F — Practice
+## Module F â€” Practice
 
 ### `exercises`
 | Column | Type |
@@ -218,7 +229,7 @@ Indexes: unique `email`.
 | soft deletes, timestamps | |
 
 ### `exercise_hints`
-id, exercise_id FK, level (1–3), text. Unique(exercise_id, level).
+id, exercise_id FK, level (1â€“3), text. Unique(exercise_id, level).
 
 ### `exercise_tests`
 id, exercise_id FK, ord, type (`assert_output`,`assert_contains`,`assert_regex`,`static_check`,`phpunit`), payload json, weight int default 1.
@@ -258,7 +269,7 @@ id, slug unique, name, category (`parse,type,undefined,method,fatal,exception,ru
 projects: id, stage_id FK nullable, level (`beginner,intermediate,advanced,capstone`), slug unique, title, brief, requirements json, solution_ref, ord, status, timestamps.
 project_tasks: id, project_id FK, ord, brief, concept_ids json, solution_hint text nullable.
 
-## Module G — User progress
+## Module G â€” User progress
 
 ### `lesson_progress`
 id, user_id FK, lesson_id FK, state (`opened,read,explained,practiced,reviewed`), active_seconds int default 0, opened_at, last_at. Unique(user_id, lesson_id).
@@ -279,7 +290,7 @@ id, user_id FK, noteable_type string, noteable_id, kind (`note,highlight,bookmar
 tags: id, name, slug unique, timestamps.
 taggables: tag_id FK, taggable_type, taggable_id. Unique(tag_id, taggable_type, taggable_id).
 
-## Module H — AI
+## Module H â€” AI
 
 ### `ai_conversations`
 id, user_id FK, mode (`tutor,teach,quiz,exercise`), lesson_id FK nullable, context json, created_at, updated_at.
@@ -293,10 +304,10 @@ id, entity_type, entity_id nullable, stage string (`lesson,exercise,quiz,cards,d
 ### `content_versions`
 id, entity_type, entity_id, payload json, actor (`ai,admin,system`), diff_summary text, created_at. Index (entity_type, entity_id).
 
-## Module I — Search
+## Module I â€” Search
 
 ### `search_index` (SQLite FTS5 virtual table)
-`entity_type, entity_id, title, body` — external-content-less virtual table, rebuilt by `search:reindex` command. Fallback query path uses `LIKE` when FTS5 unavailable (MySQL).
+`entity_type, entity_id, title, body` â€” external-content-less virtual table, rebuilt by `search:reindex` command. Fallback query path uses `LIKE` when FTS5 unavailable (MySQL).
 
 ---
 

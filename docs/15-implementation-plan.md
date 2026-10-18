@@ -25,7 +25,7 @@ Status legend: ⬜ not started · 🔄 in progress · ✅ done
 
 ---
 
-## Phase 1 — Content schema + PDF import 🔄
+## Phase 1 — Content schema + PDF import ✅
 
 **Why:** the book must exist in the DB with faithful provenance before anything renders.
 
@@ -100,7 +100,7 @@ POST /admin/books/{book}/detect    run structure detection
 
 ---
 
-## Phase 2 — Lesson rendering & reading
+## Phase 2 — Lesson rendering & reading ✅
 
 **Why:** the actual reading experience; validates the block model.
 
@@ -138,7 +138,7 @@ GET /lessons/{lesson:slug}          Learn\LessonView (3-pane)
 
 ---
 
-## Phase 3 — Concepts, prerequisites, learning path
+## Phase 3 — Concepts, prerequisites, learning path ✅
 
 **Why:** the knowledge graph powers gating, skills and the tutor's context.
 
@@ -162,7 +162,7 @@ GET /lessons/{lesson:slug}          Learn\LessonView (3-pane)
 
 ---
 
-## Phase 4 — Practice, quiz, flashcards
+## Phase 4 — Practice, quiz, flashcards ✅
 
 **Why:** the interactive core; writing and testing knowledge.
 
@@ -194,7 +194,7 @@ GET /lessons/{lesson:slug}          Learn\LessonView (3-pane)
 
 ---
 
-## Phase 5 — Progress, mastery, skills, search
+## Phase 5 — Progress, mastery, skills, search ✅
 
 **Why:** measurement and orientation; the dashboard that keeps the learner honest.
 
@@ -218,7 +218,7 @@ dashboard cards (per `08-application-screens.md`), `revision`, `skills`, `search
 
 ---
 
-## Phase 6 — AI tutor + active recall
+## Phase 6 — AI tutor + active recall ✅
 
 **Why:** teach-on-demand without creating dependency.
 
@@ -242,7 +242,7 @@ chat bubbles with source badges, quick-action chips, usage footer; recall card c
 
 ---
 
-## Phase 7 — Content pipeline at scale
+## Phase 7 — Content pipeline at scale ✅
 
 **Why:** fill all 12 stages without hand-writing; keep the human in the gate.
 
@@ -269,7 +269,7 @@ None structural (uses `content_versions`, `ai_generations`); possibly `lessons.a
 
 ---
 
-## Phase 8 — Sandboxed code execution
+## Phase 8 — Sandboxed code execution ✅
 
 **Why:** real `Run` for exercises; only after the app is otherwise complete.
 
@@ -287,7 +287,7 @@ Practice editor "Run" button + live result panel + timeout/OOM friendly messages
 
 ---
 
-## Phase 9 — Projects, interview, error library, Laravel bridge
+## Phase 9 — Projects, interview, error library, Laravel bridge ✅
 
 ### Migrations
 `projects`, `project_tasks`, `interview_questions`, `error_patterns`
@@ -306,7 +306,7 @@ project unlock gating, interview self-grade → review item, error pattern rende
 
 ---
 
-## Phase 10 — Polish, ops, QA
+## Phase 10 — Polish, ops, QA ✅
 
 - Admin analytics (coverage per stage, exercise pass rates, AI spend chart)
 - Mobile pass across all learner screens (bottom sheet rail)
@@ -317,7 +317,39 @@ project unlock gating, interview self-grade → review item, error pattern rende
 
 ---
 
-## Cross-phase rules
+## Phase 11 — Book fidelity gaps ✅
+
+**Why:** the import covers chapters 1–22 (pp. 3–833, ~89% of extracted words) but two parts of the PDF were outside the lesson tree. Deferred from MVP scope (`14-mvp-scope.md`); scheduled here so they aren't lost.
+
+| Item | Shipped |
+|---|---|
+| Figure extraction ✅ | `lesson_media` table + `FigureExtractor` (`pdfimages` via `config/import.php`): 30 raster figures (≥200×150) → `public/figures/figure-{page}.png`, 29 media rows, **34 real `<img>` blocks** (alt = caption, `loading="lazy"`, width/height, `media_id`); `BlockValidator` Image spec + `image.blade.php` render; captions matched line-start `Figure N-M. Title` only; vector figures initially lacked images — closed in Phase 12 |
+| Appendix import ✅ | Appendices A (Bibliography) + B (A Simple Parser) → chapters 23/24 (`stage 11`), sections + 5 lessons moved with chapter-level `ord` (301/302 now in ch24); index contamination in lesson 302 gone; `Chapter::citationLabel()` renders `App. A`/`App. B` (lesson citations + dashboard rows) |
+
+**Related backlog (still not in this phase):** enrich `code_examples.expected_output` (26/566 trustworthy today), Debug lab content, companion-repo import so book listings become standalone runnable code.
+
+**DoD met:** figures render in lesson view with alt text + provenance; appendices appear in `/path` stage 11 with `App. A`/`App. B` labels; `composer test` green; coverage re-run shows `image blocks = 34` (>0) and appendix lessons exist (301/302 in ch24).
+
+---
+
+## Phase 12 — Fidelity completion (figures, outputs, front matter) ✅
+
+**Why:** Phase 11 left three known fidelity gaps after a self-audit against the PDF.
+
+| Item | Shipped |
+|---|---|
+| Vector figure rendering ✅ | 71 of 100 book figures had no real image (their labels are drawn as curves, invisible to `pdfimages`). `FigureExtractor::renderVector()` now locates the caption line via `pdftotext -bbox`, grows a crop region over the adjacent whitespace/label text (content stops: prose wraps > 70 chars and code punctuation never enter a crop), and renders the page region with `pdftoppm` at 200 DPI → `public/figures/figure-{ref}.png`. Result: **100/100 figure refs have real book images, 116 `<img>` blocks, 100 files, 0 orphans** — verified visually (UML class diagrams, MVC layers, crop edges checked) |
+| `expected_output` enrichment ✅ | `BookLessonBuilder::expectedOutputFollowing()` looks up to 2 short "Output:"-style label segments past the listing instead of only the immediately-next segment: **26 → 49 of 566 listings** now carry book-derived expected output |
+| Front matter import ✅ | Chapter 0 "Front matter: About this book" (ord −1, stage 12): sections *About this book* (author/reviewer/acknowledgments, pdf 19–21) + *Introduction* (pdf 22), lessons 303/304; `markerPattern()` anchors it at `^About the Author$`, `citationLabel()` → `Front`; lesson 303 contains no TOC/cover contamination after the anchor fix |
+| Stale stub diagrams note | The 285 `diagrams` rows are generic stub-AI flowcharts (279 × `A[Input] → …`), never figure reconstructions — left as lesson decoration; real figures now supersede them where captions exist |
+
+**Index stays excluded by design** (navigation aid, not lesson material); `indexStartPage()` still caps every range before it.
+
+**DoD met:** every figure caption in lesson text resolves to a real image with alt text + provenance; front-matter lessons render in `/path` stage 12 with `Front` citations; `composer test` green; coverage script shows 100 media rows / 116 image blocks.
+
+**Still open (not scheduled):** Debug lab content; making listings *standalone runnable* (companion-repo import — expected_output only improves grading, listings still aren't files on disk); AI provider is `stub` — switch before real use.
+
+---
 
 1. **No AI calls in read paths** — enforced by test from Phase 2 onward.
 2. **Provenance everywhere** — any new content table gets the block from `06-database-design.md`.
@@ -325,3 +357,35 @@ project unlock gating, interview self-grade → review item, error pattern rende
 4. **Policies for mutations** — no inline `if (!auth()->user()->isAdmin())`.
 5. **Seeders are fixtures for tests** — reusable, deterministic (no randomness).
 6. **Report per phase** — migrations, models, services, routes, views, tests, seeders + `composer test` output before starting the next phase.
+
+---
+
+## Status report — 2026-10-12 (Phases 0–12 ✅)
+
+| Phase | Shipped |
+|---|---|
+| 0 Foundation | roles/middleware, config, admin gate, tooling (`UserRoleTest`) |
+| 1 Schema + import | migrations, enums, models, `Import\*` services, `pdf_pages` (842 pages, 176,839 words), provenance blocks |
+| 2 Rendering | `lessons.blocks.*` partials, `LessonView`, citation line, time tracking, `NoAiCallOnViewTest` |
+| 3 Concepts/path | `concept_prerequisites` (51 manual edges), Mermaid graph on `/path`, gates per stage |
+| 4 Practice/quiz/flashcards | `PracticeRunner` + `ExerciseGrader`, `QuizRunner`, `FlashcardSession` (SM-2 lite), hint ladder |
+| 5 Progress/mastery/search | `Dashboard` (incl. chapter completion), `MasteryEvaluator`, `SkillsView`, FTS5 search (2,861 rows) |
+| 6 Tutor/recall | `TutorChat` (stub provider), `RevisionQueue`, `RecallEvaluator` |
+| 7 Content at scale | `content:build` from the PDF → 302/302 lessons, 6,223 blocks, 566 code examples, 555 exercises, 656 quiz questions, 1,260 cards, 2,342 concept links, 3,339 approved; drop-cap/caption/output sanitizer in `BookLessonBuilder` |
+| 8 Sandbox | `runner/` service (signed requests, limits), `RunCodeJob`, queue worker, banned-function checks |
+| 9 Projects/interview/errors/bridge | `ProjectSeeder`, `InterviewQuestionSeeder`, `ErrorPatternSeeder`, Laravel bridge panels |
+| 10 Polish/QA | admin analytics, mobile bottom-sheet rail, a11y checks, regression |
+| 11 Book fidelity gaps | `lesson_media` + `FigureExtractor` (29 figures, 34 `<img>` blocks), appendices A/B as chapters 23/24, index garbage purged from lesson 302, `App. A`/`App. B` citations |
+| 12 Fidelity completion | pdftoppm vector figure rendering (100/100 figures real, 116 image blocks), `expected_output` 26→49, front-matter chapter 0 (lessons 303/304, `Front` citation) |
+
+**Final gates (all green, after Phase 12):**
+
+- `composer test` → pint passed · phpstan 0 · **401 tests / 400 passed / 1 skipped**
+- `composer test:runner` → **19 checks, 0 failures**
+- `npm run build` → exit 0
+- smoke script → **SMOKE PASS** (16 learner pages + admin + lesson a11y checks, all 200)
+- `content:build` → 304/304 lessons, 0 failures, 6,338 blocks (116 image); `search:reindex --all` → 2,873 rows
+
+**Loop verifications (this session):** practice submit → `ExerciseAttempt` + concept mastery via real runner; quiz 100% → `QuizAttempt`; flashcard grading → scheduled `FlashcardReview` rows (due +1 day) with revision empty-state for fresh users; debug mode panel wired to lesson `find_error`/`fix` exercises (empty-state until Phase 9-style seeded content ships — Debug lab content stays out of MVP per `14-mvp-scope.md`). Phase 11 live-verified: lesson `<img src="/figures/figure-619.png" alt="Figure 16-1. …">` with `loading="lazy"` renders 200, `/figures/figure-619.png` serves 232 KB, appendix lessons + dashboard show `App. A`/`App. B`, lesson 302 contains no index contamination. Phase 12 live-verified: `ch6-class-diagrams` shows the rendered `figure-6-1.png` (ShopProduct UML), `ch9-…generating-objects` shows `figure-9-1.png` at correct 1169×564 dims (after crop-heuristic fix), front-matter lessons serve real Introduction/author prose with no cover/TOC leakage, all 4 sample figure files return 200.
+
+**Next:** every phase in this plan is ✅. Remaining known gaps (not scheduled): Debug lab content, companion-repo import (standalone-runnable listings — `expected_output` now book-derived for 49/566 but listings still aren't files on disk), AI provider still `stub` — switch before real use.

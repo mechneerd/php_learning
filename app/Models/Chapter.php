@@ -68,4 +68,21 @@ class Chapter extends Model
     {
         return $this->hasMany(Lesson::class)->orderBy('ord');
     }
+
+    /**
+     * Short provenance label: "Ch. 12" for numbered chapters,
+     * "App. A" for appendix chapters.
+     */
+    public function citationLabel(): string
+    {
+        if (preg_match('/^Appendix\s+([A-Z])/i', $this->title, $m) === 1) {
+            return 'App. '.$m[1];
+        }
+
+        if (preg_match('/^Front\s+matter/i', $this->title) === 1) {
+            return 'Front';
+        }
+
+        return 'Ch. '.$this->number;
+    }
 }

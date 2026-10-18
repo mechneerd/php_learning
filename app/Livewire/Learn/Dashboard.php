@@ -4,6 +4,7 @@ namespace App\Livewire\Learn;
 
 use App\Enums\MasteryLevel;
 use App\Enums\ProgressState;
+use App\Models\Chapter;
 use App\Models\Concept;
 use App\Models\ConceptMastery;
 use App\Models\Exercise;
@@ -53,6 +54,7 @@ class Dashboard extends Component
             'weak' => $this->weakConcepts($user),
             'activity' => $this->recentActivity($user),
             'streak' => $this->streak($user),
+            'chapters' => $this->chapterProgress($user),
         ]);
     }
 
@@ -321,6 +323,55 @@ class Dashboard extends Component
         }
 
         return $streak;
+    }
+
+    /**
+     * Chapter-level reading completion (docs/08 screen 1: ✅ progress per
+     * chapter beside the stage chips).
+     *
+     * @return list<array{chapter: Chapter, read: int, total: int, pct: int}>
+     */
+    private function chapterProgress(User $user): array
+    {
+        $chapters = Chapter::query()->orderBy('ord')->get();
+
+        if ($chapters->isEmpty()) {
+            return [];
+        }
+
+        $byChapter = Lesson::query()
+            ->published()
+            ->whereNotNull('chapter_id')
+            ->get(['id', 'chapter_id'])
+            ->groupBy('chapter_id');
+
+        $read = LessonProgress::query()
+            ->where('user_id', $user->id)
+            ->whereIn('state', $this->readStateValues())
+            ->pluck('lesson_id')
+            ->flip();
+
+        $rows = [];
+
+        foreach ($chapters as $chapter) {
+            $lessons = $byChapter->get($chapter->id);
+
+            if ($lessons === null || $lessons->isEmpty()) {
+                continue;
+            }
+
+            $total = $lessons->count();
+            $done = $lessons->filter(static fn (Lesson $lesson): bool => $read->has($lesson->id))->count();
+
+            $rows[] = [
+                'chapter' => $chapter,
+                'read' => $done,
+                'total' => $total,
+                'pct' => (int) round($done * 100 / $total),
+            ];
+        }
+
+        return $rows;
     }
 
     /**

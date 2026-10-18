@@ -1,8 +1,13 @@
 <?php
 
+use App\Enums\ContentStatus;
+use App\Enums\ProgressState;
+use App\Models\Chapter;
 use App\Models\Concept;
 use App\Models\Exercise;
 use App\Models\ExerciseAttempt;
+use App\Models\Lesson;
+use App\Models\LessonProgress;
 use App\Models\ReviewItem;
 use App\Models\Stage;
 use App\Models\User;
@@ -109,4 +114,35 @@ test('shows recent activity entries', function () {
         ->assertOk()
         ->assertSee('Recent activity')
         ->assertSee('Build a Greeter class');
+});
+
+test('shows chapter completion from read lessons', function () {
+    $user = User::factory()->create();
+    $stage = Stage::factory()->create();
+    $chapter = Chapter::factory()->create(['number' => 1, 'title' => 'PHP and Objects', 'ord' => 0]);
+
+    $lessonA = Lesson::factory()->create([
+        'stage_id' => $stage->id,
+        'chapter_id' => $chapter->id,
+        'status' => ContentStatus::Published,
+    ]);
+    $lessonB = Lesson::factory()->create([
+        'stage_id' => $stage->id,
+        'chapter_id' => $chapter->id,
+        'status' => ContentStatus::Published,
+    ]);
+
+    LessonProgress::factory()->create([
+        'user_id' => $user->id,
+        'lesson_id' => $lessonB->id,
+        'state' => ProgressState::Read,
+    ]);
+
+    $this->actingAs($user);
+
+    $this->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Chapter completion')
+        ->assertSee('PHP and Objects')
+        ->assertSee('1/2');
 });

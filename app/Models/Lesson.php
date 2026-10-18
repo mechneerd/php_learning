@@ -140,7 +140,7 @@ class Lesson extends Model
         $parts = [];
 
         if ($this->chapter_id !== null && $this->chapter !== null) {
-            $parts[] = 'Ch. '.$this->chapter->number;
+            $parts[] = $this->chapter->citationLabel();
         }
 
         if ($this->page_printed_from !== null) {

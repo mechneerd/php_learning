@@ -81,11 +81,64 @@
             <div class="my-5">
                 <livewire:learn.tutor-chat :lesson="$lessonModel" />
             </div>
+        @elseif ($mode === 'debug')
+            <div class="my-5 rounded-xl border border-zinc-200 p-6 dark:border-zinc-700">
+                <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Debug mode</h2>
+
+                @if ($debugExercises->isEmpty())
+                    <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        No debugging challenges in this lesson yet. The Debug lab &mdash; seeded broken
+                        code to find and fix &mdash; arrives in Phase 9 (out of MVP scope).
+                    </p>
+                    <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        Meanwhile, predict output in the quiz or write and run code in practice.
+                    </p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            wire:click="setMode('practice')"
+                            class="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                        >
+                            Practice this lesson
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="setMode('quiz')"
+                            class="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                        >
+                            Take the quiz
+                        </button>
+                    </div>
+                @else
+                    <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        Find and fix challenges for this lesson. Open Practice to attempt them.
+                    </p>
+                    <ul class="mt-3 space-y-2">
+                        @foreach ($debugExercises as $debugExercise)
+                            <li class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-700">
+                                <span class="text-sm text-zinc-800 dark:text-zinc-100">{{ $debugExercise->prompt }}</span>
+                                <span class="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                    {{ $debugExercise->type->label() }} &middot; {{ $debugExercise->difficulty }}
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <div class="mt-4">
+                        <button
+                            type="button"
+                            wire:click="setMode('practice')"
+                            class="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                        >
+                            Open Practice
+                        </button>
+                    </div>
+                @endif
+            </div>
         @else
             <div class="rounded-xl border border-zinc-200 p-8 text-center dark:border-zinc-700">
                 <h2 class="text-lg font-semibold capitalize">{{ $mode }} mode</h2>
                 <p class="mt-2 text-sm text-zinc-500">
-                    Arrives in Phase {{ $modePhase ?? '?' }} - the lesson context above is already wired up.
+                    Use the mode tabs to read, teach, practice, quiz or debug this lesson.
                 </p>
             </div>
         @endif
@@ -113,7 +166,7 @@
     {{-- Right: context rail (tablet stacks it below; mobile uses the bottom sheet) --}}
     <aside class="hidden lg:block xl:sticky xl:top-6 xl:self-start">
         @include('livewire.learn.partials.rail-tabs', ['variant' => 'desktop'])
-        @include('livewire.learn.partials.context-panel')
+        @include('livewire.learn.partials.context-panel', ['panelVariant' => 'desktop'])
     </aside>
 
     {{-- Mobile: fixed tab bar + bottom sheet (docs/08: rail = bottom sheet <1024px) --}}
@@ -152,7 +205,7 @@
 
             <div class="p-4">
                 @include('livewire.learn.partials.rail-tabs', ['variant' => 'mobile'])
-                @include('livewire.learn.partials.context-panel')
+                @include('livewire.learn.partials.context-panel', ['panelVariant' => 'mobile'])
             </div>
         </div>
     </div>

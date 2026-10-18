@@ -16,6 +16,13 @@ return [
 
     'pdfinfo_binary' => env('PDFINFO_BINARY'),
 
+    'pdfimages_binary' => env('PDFIMAGES_BINARY'),
+
+    'pdftoppm_binary' => env('PDFTOPPM_BINARY'),
+
+    // Official Apress companion repository (listing markers + sources).
+    'companion_path' => env('COMPANION_PATH'),
+
     'book_title' => env('BOOK_TITLE', 'PHP 8 Objects, Patterns, and Practice'),
 
     'detected_paths' => [
@@ -37,6 +44,26 @@ return [
             'unix' => [
                 '/usr/bin/pdfinfo',
                 '/opt/homebrew/bin/pdfinfo',
+            ],
+        ],
+        'pdfimages' => [
+            'windows' => [
+                'C:/poppler/Library/bin/pdfimages.exe',
+                'C:/Program Files/poppler/Library/bin/pdfimages.exe',
+            ],
+            'unix' => [
+                '/usr/bin/pdfimages',
+                '/opt/homebrew/bin/pdfimages',
+            ],
+        ],
+        'pdftoppm' => [
+            'windows' => [
+                'C:/poppler/Library/bin/pdftoppm.exe',
+                'C:/Program Files/poppler/Library/bin/pdftoppm.exe',
+            ],
+            'unix' => [
+                '/usr/bin/pdftoppm',
+                '/opt/homebrew/bin/pdftoppm',
             ],
         ],
     ],

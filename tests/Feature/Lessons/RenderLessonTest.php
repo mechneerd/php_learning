@@ -2,9 +2,12 @@
 
 use App\Enums\BlockType;
 use App\Enums\ContentStatus;
+use App\Enums\ExerciseType;
+use App\Enums\ProvenanceSource;
 use App\Livewire\Learn\LessonView;
 use App\Models\CodeExample;
 use App\Models\Diagram;
+use App\Models\Exercise;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\User;
@@ -50,6 +53,38 @@ it('renders all eighteen block partials on the page', function () {
 
     expect($html)->toContain('language-php')
         ->toContain('<details');
+});
+
+it('renders an extracted book figure as an image with alt text', function () {
+    $lesson = LessonFixture::full();
+
+    $lesson->blocks()->create([
+        'ord' => 99,
+        'type' => BlockType::Image,
+        'payload' => [
+            'figure_ref' => '16-1',
+            'caption' => 'Figure 16-1. Adding a package to Packagist',
+            'page_pdf' => 619,
+            'src' => 'figures/figure-619.png',
+            'alt' => 'Screenshot of a package being added to Packagist',
+            'media_id' => 1,
+            'width' => 863,
+            'height' => 683,
+        ],
+        'source' => ProvenanceSource::Book,
+        'page_printed_from' => 606,
+        'page_printed_to' => 606,
+        'page_pdf_from' => 619,
+        'page_pdf_to' => 619,
+    ]);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('lessons.show', $lesson->slug))
+        ->assertOk()
+        ->assertSee('figures/figure-619.png')
+        ->assertSee('Screenshot of a package being added to Packagist')
+        ->assertSee('loading="lazy"', false)
+        ->assertSee('width="863"', false);
 });
 
 it('404s for unpublished lessons', function () {
@@ -134,6 +169,45 @@ it('switches mode tabs and rail tabs without losing the lesson', function () {
         ->assertSee('Ask anything about the lesson')
         ->call('setMode', 'invented-mode')
         ->assertSet('mode', 'teach');
+});
+
+it('shows the debug mode panel with an empty state and no phase placeholder', function () {
+    $lesson = LessonFixture::full();
+
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test(LessonView::class, ['lesson' => $lesson])
+        ->call('setMode', 'debug')
+        ->assertSet('mode', 'debug')
+        ->assertSee('Debug mode')
+        ->assertSee('No debugging challenges in this lesson yet')
+        ->assertSee('Practice this lesson')
+        ->assertDontSee('Arrives in Phase');
+});
+
+it('lists find and fix exercises in debug mode', function () {
+    $lesson = LessonFixture::full();
+
+    Exercise::factory()->create([
+        'lesson_id' => $lesson->id,
+        'type' => ExerciseType::FindError,
+        'prompt' => 'Spot the undefined index warning.',
+    ]);
+    Exercise::factory()->create([
+        'lesson_id' => $lesson->id,
+        'type' => ExerciseType::Fix,
+        'prompt' => 'Repair the broken constructor call.',
+    ]);
+
+    $this->actingAs(User::factory()->create());
+
+    Livewire::test(LessonView::class, ['lesson' => $lesson])
+        ->call('setMode', 'debug')
+        ->assertSee('Spot the undefined index warning.')
+        ->assertSee('Find the error')
+        ->assertSee('Repair the broken constructor call.')
+        ->assertSee('Fix the bug')
+        ->assertSee('Open Practice');
 });
 
 it('links the previous and next lessons in reading order', function () {

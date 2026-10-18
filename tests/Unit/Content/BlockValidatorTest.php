@@ -30,6 +30,16 @@ it('accepts and normalizes a payload for every block type', function (BlockType 
     'interview_ref' => [BlockType::InterviewRef, ['labels' => ['ask this']]],
     'tabs' => [BlockType::Tabs, ['tabs' => [['label' => 'A', 'content' => 'first'], ['label' => 'B', 'content' => 'second']]]],
     'image' => [BlockType::Image, ['figure_ref' => '3-1', 'caption' => 'Sketch', 'page_pdf' => 45]],
+    'image with extracted file' => [BlockType::Image, [
+        'figure_ref' => '16-1',
+        'caption' => 'Figure 16-1. Adding a package to Packagist',
+        'page_pdf' => 619,
+        'src' => 'figures/figure-619.png',
+        'alt' => 'Figure 16-1. Adding a package to Packagist',
+        'media_id' => 7,
+        'width' => 863,
+        'height' => 683,
+    ]],
     'code_example' => [BlockType::CodeExample, ['code_example_id' => 12]],
 ]);
 

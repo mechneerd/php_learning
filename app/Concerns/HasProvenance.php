@@ -54,7 +54,7 @@ trait HasProvenance
                 : null;
 
             if ($chapter !== null) {
-                $parts[] = 'Ch. '.$chapter->number;
+                $parts[] = $chapter->citationLabel();
             }
         }
 

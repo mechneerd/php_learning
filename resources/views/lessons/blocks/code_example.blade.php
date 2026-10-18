@@ -18,6 +18,9 @@
                 @if ($example['listing_ref'] !== null)
                     <span class="font-mono">listing {{ $example['listing_ref'] }}</span>
                 @endif
+                @if (! empty($example['external_ref']))
+                    <span class="font-mono text-zinc-600 dark:text-zinc-500" title="Official companion source: {{ $example['external_ref'] }}">{{ \Illuminate\Support\Str::afterLast($example['external_ref'], '/') }}</span>
+                @endif
             </span>
             <x-citation-line :citation="$block['citation'] ?? null" />
         </figcaption>

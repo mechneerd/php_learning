@@ -54,6 +54,36 @@
         </section>
     </div>
 
+    {{-- Chapter completion (✅ progress) --}}
+    <section class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Chapter completion</h2>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">lessons read, per book chapter</p>
+        </div>
+        @if ($chapters === [])
+            <x-empty-state title="No chapters yet" hint="Chapter progress appears once lessons are published." class="mt-3 !py-6" />
+        @else
+            <ul class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach ($chapters as $row)
+                    <li class="rounded-lg border border-zinc-200 p-2.5 dark:border-zinc-700">
+                        <div class="flex items-center justify-between gap-2 text-xs">
+                            <span class="min-w-0 truncate font-medium text-zinc-700 dark:text-zinc-200">
+                                {{ $row['chapter']->citationLabel() }} · {{ $row['chapter']->title }}
+                            </span>
+                            <span class="shrink-0 tabular-nums text-zinc-500 dark:text-zinc-400">
+                                {{ $row['read'] }}/{{ $row['total'] }} · {{ $row['pct'] }}%
+                            </span>
+                        </div>
+                        <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700" role="progressbar"
+                            aria-valuenow="{{ $row['pct'] }}" aria-valuemin="0" aria-valuemax="100"
+                            aria-label="{{ __('Chapter completion') }} {{ $row['chapter']->number }}">
+                            <div class="h-full rounded-full bg-zinc-900 dark:bg-zinc-100" style="width: {{ $row['pct'] }}%"></div>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </section>
     {{-- Bottom row: weak concepts, recent activity, streak --}}
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <section class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">

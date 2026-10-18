@@ -3,9 +3,14 @@
 namespace App\Livewire\Learn;
 
 use App\Enums\ContentStatus;
+use App\Enums\ExerciseType;
+use App\Enums\NoteKind;
 use App\Enums\ProgressState;
+use App\Models\Exercise;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
+use App\Models\Note;
+use App\Models\User;
 use App\Services\Content\LessonBuilder;
 use App\Support\LaravelBridge;
 use Illuminate\Contracts\View\View;
@@ -24,18 +29,14 @@ class LessonView extends Component
 
     public string $railTab = 'progress';
 
+    public string $noteBody = '';
+
+    public string $noteKind = 'note';
+
     /**
      * @var list<string>
      */
     private const MODES = ['read', 'teach', 'practice', 'quiz', 'debug'];
-
-    /**
-     * @var array<string, int>
-     */
-    private const MODE_PHASE = [
-        'teach' => 6,
-        'debug' => 9,
-    ];
 
     /**
      * @var list<string>
@@ -82,6 +83,53 @@ class LessonView extends Component
     }
 
     /**
+     * Save a personal note on this lesson (docs/08 screen 14: the rail's
+     * Notes tab is the per-lesson composer behind /notes).
+     */
+    public function saveNote(): void
+    {
+        $user = auth()->user();
+
+        abort_unless($user instanceof User, 403);
+
+        $this->validate([
+            'noteBody' => ['required', 'string', 'max:2000'],
+            'noteKind' => ['required', 'string', 'in:'.implode(',', array_map(
+                static fn (NoteKind $kind): string => $kind->value,
+                NoteKind::cases(),
+            ))],
+        ]);
+
+        Note::query()->create([
+            'user_id' => $user->id,
+            'noteable_type' => Lesson::class,
+            'noteable_id' => $this->lessonId,
+            'kind' => NoteKind::from($this->noteKind),
+            'body' => trim($this->noteBody),
+        ]);
+
+        $this->noteBody = '';
+        $this->railTab = 'notes';
+    }
+
+    /**
+     * Delete one of the current user's notes on this lesson.
+     */
+    public function deleteNote(int $noteId): void
+    {
+        $user = auth()->user();
+
+        abort_unless($user instanceof User, 403);
+
+        Note::query()
+            ->whereKey($noteId)
+            ->where('user_id', $user->id)
+            ->where('noteable_type', Lesson::class)
+            ->where('noteable_id', $this->lessonId)
+            ->delete();
+    }
+
+    /**
      * Focused-reading heartbeat dispatched from the page every 15 seconds
      * while the tab is visible.
      */
@@ -122,8 +170,23 @@ class LessonView extends Component
                 ->first(),
             'prev' => $position > 0 ? $flat[$position - 1] : null,
             'next' => $position !== false && isset($flat[$position + 1]) ? $flat[$position + 1] : null,
-            'modePhase' => self::MODE_PHASE[$this->mode] ?? null,
+            'debugExercises' => $this->mode === 'debug' ? Exercise::query()
+                ->where('lesson_id', $lesson->id)
+                ->whereIn('type', [ExerciseType::FindError, ExerciseType::Fix])
+                ->published()
+                ->orderBy('ord')
+                ->get() : collect(),
             'bridgeRows' => LaravelBridge::forStage($lesson->stage->number ?? -1),
+            'notes' => $this->railTab === 'notes' ? Note::query()
+                ->where('user_id', auth()->id())
+                ->where('noteable_type', Lesson::class)
+                ->where('noteable_id', $lesson->id)
+                ->orderByDesc('created_at')
+                ->get() : collect(),
+            'concepts' => $this->railTab === 'concepts' ? $lesson->concepts()
+                ->orderBy('concepts.name')
+                ->get(['concepts.id', 'concepts.slug', 'concepts.name', 'concepts.definition', 'concepts.is_core', 'lesson_concepts.role'])
+                : collect(),
         ]);
     }
 

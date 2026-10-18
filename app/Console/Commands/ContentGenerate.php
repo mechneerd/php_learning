@@ -87,7 +87,7 @@ class ContentGenerate extends Command
                 return $published;
             });
 
-            $plan[] = ['Ch. '.$chapter->number, count($sections).' sections, '.count($fresh).' to generate'];
+            $plan[] = [$chapter->citationLabel(), count($sections).' sections, '.count($fresh).' to generate'];
             $queued += count($fresh);
 
             if ($this->option('dry-run')) {

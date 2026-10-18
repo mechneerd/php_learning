@@ -1,7 +1,10 @@
 <?php
 
+use App\Enums\ContentStatus;
 use App\Enums\NoteKind;
+use App\Livewire\Learn\LessonView;
 use App\Livewire\Learn\NotesList;
+use App\Models\Concept;
 use App\Models\Lesson;
 use App\Models\Note;
 use App\Models\User;
@@ -84,4 +87,88 @@ test('only shows your own notes', function () {
         ->assertOk()
         ->assertSee('My note about traits.')
         ->assertDontSee('Someone else note about traits.');
+});
+
+test('the lesson rail saves a personal note on the current lesson', function () {
+    $user = User::factory()->create();
+    $lesson = Lesson::factory()->create(['status' => ContentStatus::Published]);
+
+    $this->actingAs($user);
+
+    Livewire::test(LessonView::class, ['lesson' => $lesson])
+        ->set('railTab', 'notes')
+        ->set('noteBody', 'A class is a blueprint for objects.')
+        ->set('noteKind', 'important')
+        ->call('saveNote')
+        ->assertHasNoErrors()
+        ->assertSee('A class is a blueprint for objects.');
+
+    $note = Note::query()
+        ->where('user_id', $user->id)
+        ->where('noteable_type', Lesson::class)
+        ->where('noteable_id', $lesson->id)
+        ->first();
+
+    expect($note)->not->toBeNull()
+        ->and($note->kind)->toBe(NoteKind::Important)
+        ->and($note->body)->toBe('A class is a blueprint for objects.');
+});
+
+test('the lesson rail rejects an empty note', function () {
+    $user = User::factory()->create();
+    $lesson = Lesson::factory()->create(['status' => ContentStatus::Published]);
+
+    $this->actingAs($user);
+
+    Livewire::test(LessonView::class, ['lesson' => $lesson])
+        ->set('railTab', 'notes')
+        ->call('saveNote')
+        ->assertHasErrors(['noteBody']);
+
+    expect(Note::query()->count())->toBe(0);
+});
+
+test('the lesson rail deletes only your own note on the lesson', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $lesson = Lesson::factory()->create(['status' => ContentStatus::Published]);
+
+    $mine = Note::factory()->create([
+        'user_id' => $user->id,
+        'noteable_type' => Lesson::class,
+        'noteable_id' => $lesson->id,
+    ]);
+    $theirs = Note::factory()->create([
+        'user_id' => $other->id,
+        'noteable_type' => Lesson::class,
+        'noteable_id' => $lesson->id,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(LessonView::class, ['lesson' => $lesson])
+        ->set('railTab', 'notes')
+        ->call('deleteNote', $mine->id);
+
+    expect(Note::query()->whereKey($mine->id)->exists())->toBeFalse()
+        ->and(Note::query()->whereKey($theirs->id)->exists())->toBeTrue();
+});
+
+test('the concepts tab lists concepts linked to the lesson', function () {
+    $user = User::factory()->create();
+    $lesson = Lesson::factory()->create(['status' => ContentStatus::Published]);
+    $concept = Concept::factory()->create([
+        'name' => 'Object Identity',
+        'definition' => 'Two variables can point at the same object.',
+    ]);
+
+    $lesson->concepts()->sync([$concept->id => ['role' => 'core']]);
+
+    $this->actingAs($user);
+
+    Livewire::test(LessonView::class, ['lesson' => $lesson])
+        ->set('railTab', 'concepts')
+        ->assertSee('Object Identity')
+        ->assertSee('Two variables can point at the same object.')
+        ->assertSee(route('concepts.show', $concept));
 });
